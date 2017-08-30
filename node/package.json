@@ -24,6 +24,7 @@
   "homepage": "https://github.com/sistemas-distribuidos-cc-inf/inftalk#readme",
   "dependencies": {
     "express": "^4.15.4",
+    "firebase-admin": "^5.2.1",
     "socket.io": "^2.0.3"
   }
 }
