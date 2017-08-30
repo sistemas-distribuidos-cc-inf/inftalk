@@ -5,9 +5,10 @@ const path = require("path");
 const io = require('socket.io')(http);
 let clients = {};
 server.use('/', express.static(path.resolve('./public')));
+server.use('/', express.static(path.resolve('./client')));
 
 server.get('/', (req, res) => {
-  res.sendFile(path.resolve('./client/index.html'));
+  res.sendFile(path.resolve('./client/chat.html'));
 });
 http.listen(3000, () => {
   console.log('listing port 3000');
