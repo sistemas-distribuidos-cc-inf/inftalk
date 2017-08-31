@@ -2,25 +2,21 @@ const express = require('express');
 const server = express();
 const http = require('http').Server(server);
 const path = require("path");
-const io = require('socket.io')(http);
-const firebase = require("firebase-admin");
-
-
-
+const io_server = require('socket.io')(http);
 let clients = {};
 server.use('/', express.static(path.resolve('./public')));
 server.use('/', express.static(path.resolve('./client')));
 
-
-
 server.get('/', (req, res) => {
-  res.sendFile(path.resolve('./client/index.html'));
+  res.sendFile(path.resolve('./client/chat.html'));
 });
 http.listen(3000, () => {
   console.log('listing port 3000');
 });
+var io_client = require('socket.io-client');
+var server_socket = io_client.connect('http://localhost:4320', {reconnect: true});
 
-io.on('connection', (socket) => {
+io_server.on('connection', (socket) => {
   socket.on('join', (name) => {
     consele.log('connect', name);
     clients[socket.id] = name;
@@ -30,13 +26,13 @@ io.on('connection', (socket) => {
   });
   socket.on('send', function (message) {
     console.log('message:', message);
-    socket.broadcast.emit("receive", message)
+    server_socket.emit("receive", message)
   });
 });
 
-const serviceAccount = require("./firebase/inftalkufg-firebase-adminsdk-jtlak-f87daeb2ca");
 
-firebase.initializeApp({
-  credential: firebase.credential.cert(serviceAccount),
-  databaseURL: "https://inftalkufg.firebaseio.com"
+// Add a connect listener
+server_socket.on('connect', function (socket) {
+    console.log('Connected!');
 });
+server_socket.emit('CH01', 'me', 'test msg');

@@ -37,20 +37,34 @@
 //   });
 // });
 
-var app = require('express')();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
+// var app = require('express')();
+// var server = require('http').Server(app);
+// var io = require('socket.io')(server);
 
-server.listen(4320);
+// server.listen(4320);
 
 // app.get('/', function (req, res) {
 //   res.sendfile(__dirname + '/index.html');
 // });
 
-io.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
-});
+// io.on('connection', function (socket) {
+//   socket.emit('news', { hello: 'world' });
+//   socket.on('my other event', function (data) {
+//     console.log(data);
+//   });
+// });
       
+
+// io.on('connection', (socket) => {
+//   socket.on('join', (name) => {
+//     consele.log('connect', name);
+//     clients[socket.id] = name;
+//   });
+//   socket.on("disconnect", () => {
+//     delete clients[socket.id];
+//   });
+//   socket.on('receive', function (message) {
+//     console.log('message:', message);
+//     socket.emit("send", message)
+//   });
+// });
