@@ -12,10 +12,6 @@ net.createServer((client) => {
     clientList.push(client);
     showClientForStart(client);
 
-
-
-
-
     // broadcast(client.name + " joined the chat\n", client);
 
     client.on('data', function (data) {
@@ -59,34 +55,40 @@ function establishConnection(client) {
     clientList = clientList.map((_c) => {
         if (_c.name == client.chat.socketId) {
             client.chat.connection = true;
-            _c.chat = {
-                socketId: clone(client.name),
-                connection: true
-            }
-            client.write('client Establish connection with' + _c.chat.socketId);
-            client.write('Type message: ');
-            _c.write('_c Establish connection with' + client.chat.socketId);
-            _c.write('Type message: ');
+						if(_c.chat.socketId) 
+							client.write("client already connection active")
+						else {
+							_c.chat = {
+									socketId: clone(client.name),
+									connection: true
+							}
+							client.write('Establish connection with' + _c.chat.socketId + "\n");
+							client.write('Type message: ');
+							_c.write('Establish connection with' + client.chat.socketId + "\n");
+							_c.write('Type message: ');
+						}
         }
         return _c;
     });
 }
 
 function showClientForStart(client) {
-    var list = [];
-    list = clientList.map((c, index) => {
-        if (c === client)
-            return ['NOT', index, '-', 'ME'].join(' ');
-        return [index, '-', c.name].join(' ');
-
-    });
     client.chat = {
         connection: false,
         socketId: null
     };
     clientList.forEach((_c) => {
+			  var list = [];
+				list = clientList.map((c, index) => {
+						if (!(c == _c))
+								return ['#', index, '-', c.name].join(' ');
+				});
         _c.write('select a person to start conversation by starting with #ID (example: #0)\n')
-        _c.write(list.join('\n'));
+        if(list.length)
+         _c.write(list.join('\n'));
+        else 
+          _c.write('Nothing');
+        
     })
 
 }
