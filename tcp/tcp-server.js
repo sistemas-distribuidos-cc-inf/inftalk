@@ -7,16 +7,18 @@ var
     clientList = [];
 
 net.createServer((client) => {
-    client.name = client.remoteAddress + ":" + client.remotePort;
-    client.chat = [];
-    clientList.push(client);
-    showClientForStart(client);
-
-    // broadcast(client.name + " joined the chat\n", client);
-
     client.on('data', function (data) {
         data = data.toString();
-        if (data.indexOf('#') > -1) {
+        console.log("************data*********")
+        console.log(data)
+        if(data.indexOf('**') > 1) {
+            var split = data.split("**");
+            client.name = split[0] + ":" + split[1];
+            client.chat = [];
+            clientList.push(client);
+            showClientForStart(client);
+        }
+        else if (data.indexOf('#') > -1) {
             var socketIndex = data.split('#')[1];
             var socketId = clientList[socketIndex].name;
             console.log(socketId);
@@ -25,6 +27,8 @@ net.createServer((client) => {
             client.chat.connection = false;
             client.write('Wait for the connection\n\n');
             establishConnection(client);
+        } else if (data.indexOf('SAIR') > -1) {
+            desconect(client);
         } else if (client.chat.connection) {
             sendChat(client, data);
         }
@@ -48,25 +52,46 @@ function sendChat(client, message) {
         if (_c.name == client.chat.socketId) {
             _c.write(client.name + ': ' + message);
             _c.write('\n');
+            client.write("Type message: ")
         }
     });
+}
+function desconect(client, message) {
+    clientList = clientList.map((_c) => {
+        if (_c.name == client.chat.socketId) {
+            _c.write(client.name + ': desconectou'); //PASSSAR PARA O INGLES
+            _c.write('\n');
+            client.write(_c.name + ": desconectou");
+            _c.chat = {
+                socketId: null,
+                connection: false
+            };
+            client.chat = {
+                socketId: null,
+                connection: false
+            };
+        }
+        return _c;
+    });
+    showClientForStart({})
 }
 function establishConnection(client) {
     clientList = clientList.map((_c) => {
         if (_c.name == client.chat.socketId) {
             client.chat.connection = true;
-						if(_c.chat.socketId) 
-							client.write("client already connection active")
-						else {
-							_c.chat = {
-									socketId: clone(client.name),
-									connection: true
-							}
-							client.write('Establish connection with' + _c.chat.socketId + "\n");
-							client.write('Type message: ');
-							_c.write('Establish connection with' + client.chat.socketId + "\n");
-							_c.write('Type message: ');
-						}
+            if(_c.chat.socketId) 
+                client.write("client already connection active")
+            else {
+                _c.chat = {
+                        socketId: clone(client.name),
+                        connection: true
+                }
+                client.write('Establish connection with' + _c.chat.socketId + "\n");
+                client.write('Para sair da conexão da conexão digite SAIR \n');
+                client.write('Type message: ');
+                _c.write('Establish connection with' + client.chat.socketId + "\n");
+                _c.write('Type message: ');
+            }
         }
         return _c;
     });
@@ -78,17 +103,17 @@ function showClientForStart(client) {
         socketId: null
     };
     clientList.forEach((_c) => {
-			  var list = [];
-				list = clientList.map((c, index) => {
-						if (!(c == _c))
-								return ['#', index, '-', c.name].join(' ');
-				});
-        _c.write('select a person to start conversation by starting with #ID (example: #0)\n')
-        if(list.length)
-         _c.write(list.join('\n'));
-        else 
-          _c.write('Nothing');
-        
+        var list = [];
+        list = clientList.filter((c) =>!(c == _c));
+        list = list.map((c, index) => [index, '-', c.name].join(' '));
+        if(!_c.chat.connection) {
+            if(list.length) {
+                _c.write('select a person to start conversation by starting with #ID (example: #0)\n');
+                _c.write(list.join('\n'));
+            }
+            else 
+            _c.write('Ninguém conectado no momento\n');
+        }
     })
 
 }
