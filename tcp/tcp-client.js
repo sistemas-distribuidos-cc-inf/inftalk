@@ -30,8 +30,6 @@ function getNick(){
 function getPort(){
   console.log("What's your port?");
 }
-
-console.log("What's your name?");
 readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -57,4 +55,4 @@ readline.createInterface({
     }
 });
 
-// getNick();
+getNick();

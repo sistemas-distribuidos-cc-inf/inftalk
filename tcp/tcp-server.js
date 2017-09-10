@@ -35,6 +35,7 @@ net.createServer((client) => {
 
     });
     client.on('end', function () {
+        console.log('cliente desconectou')
         for (var i = 0; i < clientList.length; i++) {
             if (clientList[i] == client) {
                 console.log('Client has disconnected', client.name);
