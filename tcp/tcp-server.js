@@ -1,12 +1,20 @@
+/*
+Declaração de variáveis
+ */
 const
     net = require('net'),
     readline = require('readline'),
     port = 5050;
 
 var
-    clientList = [];
+    clientList = [],
+    server;
 
-net.createServer((client) => {
+/**
+ Função createServer()
+ Cria o server tcp
+*/
+server = net.createServer((client) => {
     client.on('data', function (data) {
         data = data.toString();
         console.log("************data*********")
@@ -25,17 +33,17 @@ net.createServer((client) => {
             console.log(client.chat)
             client.chat.socketId = socketId;
             client.chat.connection = false;
-            client.write('Wait for the connection\n\n');
+            client.write('Wait connection\n\n');
             establishConnection(client);
-        } else if (data.indexOf('SAIR') > -1) {
-            desconect(client);
+        } else if (data.indexOf('QUIT') > -1) {
+            disconnect(client);
         } else if (client.chat.connection) {
             sendChat(client, data);
         }
 
     });
     client.on('end', function () {
-        console.log('cliente desconectou')
+        console.log('client disconnected')
         for (var i = 0; i < clientList.length; i++) {
             if (clientList[i] == client) {
                 console.log('Client has disconnected', client.name);
@@ -43,11 +51,19 @@ net.createServer((client) => {
             }
         }
     });
-}).listen(port, () => {
+});
+/**
+ Função listen()
+ Servidor passa a ouvir na porta @port
+ */
+server.listen(port, () => {
     console.log("Chat server running at port " + port);
 });
 
-
+/**
+ Função sendChat()
+ envia mensagem para o @client
+ */
 function sendChat(client, message) {
     clientList.forEach((_c) => {
         if (_c.name == client.chat.socketId) {
@@ -57,12 +73,16 @@ function sendChat(client, message) {
         }
     });
 }
-function desconect(client, message) {
+/**
+Função disconnect()
+Desconecta os clientes em conexão aberta
+*/
+function disconnect(client, message) {
     clientList = clientList.map((_c) => {
         if (_c.name == client.chat.socketId) {
-            _c.write(client.name + ': desconectou'); //PASSSAR PARA O INGLES
+            _c.write(client.name + ': disconnected'); //PASSSAR PARA O INGLES
             _c.write('\n');
-            client.write(_c.name + ": desconectou");
+            client.write(_c.name + ": disconnected");
             _c.chat = {
                 socketId: null,
                 connection: false
@@ -76,21 +96,25 @@ function desconect(client, message) {
     });
     showClientForStart({})
 }
+/**
+ Função establishConnection()
+ Estabelece a conexão entre os clientes
+ */
 function establishConnection(client) {
     clientList = clientList.map((_c) => {
         if (_c.name == client.chat.socketId) {
             client.chat.connection = true;
             if(_c.chat.socketId) 
-                client.write("client already connection active")
+                client.write("client are busy")
             else {
                 _c.chat = {
                         socketId: clone(client.name),
                         connection: true
                 }
-                client.write('Establish connection with' + _c.chat.socketId + "\n");
-                client.write('Para sair da conexão da conexão digite SAIR \n');
+                client.write('Connection established with' + _c.chat.socketId + "\n");
+                client.write('To close chat type QUIT \n');
                 client.write('Type message: ');
-                _c.write('Establish connection with' + client.chat.socketId + "\n");
+                _c.write('Connection established with' + client.chat.socketId + "\n");
                 _c.write('Type message: ');
             }
         }
@@ -98,6 +122,10 @@ function establishConnection(client) {
     });
 }
 
+/**
+ Função showClientForStart()
+ Mostra todos os clientes conectados
+ */
 function showClientForStart(client) {
     client.chat = {
         connection: false,
@@ -109,72 +137,20 @@ function showClientForStart(client) {
         list = list.map((c, index) => [index, '-', c.name].join(' '));
         if(!_c.chat.connection) {
             if(list.length) {
-                _c.write('select a person to start conversation by starting with #ID (example: #0)\n');
+                _c.write('Select a person to start talk by starting with #ID (example: #0)\n');
                 _c.write(list.join('\n'));
             }
             else 
-            _c.write('Ninguém conectado no momento\n');
+            _c.write('Nobody online\n');
         }
     })
 
 }
 
-function broadcast(message, sender) {
-    clientList.forEach(function (client) {
-        // Don't want to send it to sender
-        // if (client === sender) return;
-        client.write(message);
-    });
-    // Log it to the server output too
-    process.stdout.write(message)
-}
-
-// function startServer() {
-//     net.createServer(function (s) {
-//         if (socket) return s.end("Sorry this chat is full");
-
-//         socket = s;
-//         socket.write("Welcome to the chat, I'm " + myNick);
-
-//         socket.on('data', function (data) {
-//             data = data.toString();
-//             console.log(data);
-//         });
-
-//         socket.on('end', function () {
-//             console.log('Client has disconnected');
-//             socket = null;
-//         });
-
-//     }).listen(port);
-
-//     console.log("Chat server running at port " + port);
-// }
-
-// function getNick() {
-//     console.log("What's your name?");
-// }
-
-// readline.createInterface({
-//     input: process.stdin,
-//     output: process.stdout
-// }).on('line', function (line) {
-//     if (!myNick) {
-//         line = line.trim();
-//         if (line.length < 1) {
-//             getNick();
-//         } else {
-//             myNick = line;
-//             startServer();
-//         }
-//     } else {
-//         socket.write(myNick + ": " + line);
-//     }
-// });
-// ;
-
-// getNick();
-
+/**
+ Função clone()
+ Copia um objeto
+ */
 function clone(obj) {
     var copy;
 
