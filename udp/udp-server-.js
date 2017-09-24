@@ -1,5 +1,5 @@
 let clientList = [];
-
+constant = require('./constant.js');
 const server = {
 	net: require('net'),
 	dgram: require('dgram'),
@@ -8,23 +8,23 @@ const server = {
 	create() {
 		server.connection = server.net.createServer((client) => {
 			client.on('data', function (data) {
-				data = data.toString();
-				if (data.indexOf('**') > 1) {
-					var split = data.split("**");
-					client.name = split[0];
-					client.port = split[1];
+				data = JSON.parse(data.toString());
+				console.log(data);
+				if (data[constant.CREATE_USER]) {
+					var split = data[constant.CREATE_USER];
+					client.name = data[constant.CREATE_USER].nickname;
+					client.port = data[constant.CREATE_USER].port;
 					client.chat = [];
 					clientList.push(client);
 					server.showClientForStart(client);
 				}
-				else if (data.indexOf('#') > -1) {
-					var socketIndex = data.split('#')[1];
+				else if (data[constant.SELECT_USER]) {
+					var socketIndex = data[constant.SELECT_USER].user;
 					var socketId = clientList[socketIndex].name;
 					client.chat.socketId = socketId;
 					client.chat.connection = false;
-					client.write('Wait connection\n\n');
 					server.establishConnection(client);
-				} else if (data.indexOf('QUIT') > -1) {
+				} else if (data[constant.QUIT]) {
 					server.disconnect(client);
 				} else if (client.chat && client.chat.connection) {
 					///server.sendChat(client, data);
@@ -32,7 +32,6 @@ const server = {
 
 			});
 			client.on('end', function () {
-				console.log('client disconnected')
 				for (var i = 0; i < clientList.length; i++) {
 					if (clientList[i] == client) {
 						console.log('Client has disconnected', client.name);
@@ -57,9 +56,13 @@ const server = {
 	disconnect(client, message) {
 		clientList = clientList.map((_c) => {
 			if (_c.name == client.chat.socketId) {
-				_c.write(client.name + ': disconnected');
-				_c.write('\n');
-				client.write(_c.name + ": disconnected");
+				const obj = {
+					[constant.QUIT]: {
+						quit: true
+					}
+				};
+				_c.write(JSON.stringify(obj));
+				client.write(JSON.stringify(obj));
 				_c.chat = {
 					socketId: null,
 					connection: false
@@ -71,28 +74,41 @@ const server = {
 			}
 			return _c;
 		});
+
 		server.showClientForStart({});
 	},
 	establishConnection(client) {
 		clientList = clientList.map((_c) => {
 			if (_c.name == client.chat.socketId) {
 				client.chat.connection = true;
-				if (_c.chat.socketId)
-					client.write("client are busy")
+				if (_c.chat.socketId) {
+					const obj = {
+						[constant.BUSY]: {
+							message: 'client are busy'
+						}
+					};
+					client.write(JSON.stringify(obj));
+				}
 				else {
 					_c.chat = {
 						socketId: clone(client.name),
 						connection: true
-					}
-					client.write('Connection established with' + _c.chat.socketId + "\n");
-					client.write('To close chat type QUIT \n');
-					client.write('Type message: ');
-					_c.write('Connection established with' + client.chat.socketId + "\n");
-					_c.write('Type message: ');
+					};
+					const obj = {
+						[constant.ESTABLISHED]: {
+							message: 'Connection established with\nTo close chat type QUIT \nType message: '
+						}
+					};
+					client.write(JSON.stringify(obj));
+					_c.write(JSON.stringify(obj));
 					server.startUDPServer(client, (cliente) => {
-						cliente.write(cliente.port + "@@");
-						_c.write(cliente.port + "@@");
-						console.log("callback da funcão de start UDP Server");
+						const obj = {
+							[constant.CONNECTION]: {
+								port: cliente.port
+							}
+						};
+						cliente.write(JSON.stringify(obj));
+						_c.write(JSON.stringify(obj));
 					});
 				}
 			}
@@ -111,12 +127,24 @@ const server = {
 					return [index, '-', c.name].join(' ')
 			});
 			if (!_c.chat.connection) {
-				if (list.length) {
-					_c.write('Select a person to start talk by starting with #ID (example: #0)\n');
-					_c.write(list.join('\n'));
+				if (list.length && list[0]) {
+					const obj1 = {
+						[constant.SELECT_USER]: {
+							message: 'Select a person to start talk by starting with #ID (example: #0)\n',
+							list: list.join('\n')
+						}
+					};
+					_c.write(JSON.stringify(obj1));
 				}
-				else
-					_c.write('Nobody online\n');
+				else {
+					const obj2 = {
+						[constant.SELECT_USER]: {
+							message: 'Nobody users',
+							list: ''
+						}
+					};
+					_c.write(JSON.stringify(obj2));
+				}
 			}
 		})
 
@@ -131,6 +159,7 @@ const server = {
 		cliente.serverUDP.on('message', (msg, rinfo) => {
 			if (cliente.clientConnection.every((cn) => cn.port != rinfo.port))
 				cliente.clientConnection.push(rinfo);
+			console.log(cliente.clientConnection)
 			server.brodcastUPD(cliente.clientConnection, msg, rinfo, cliente);
 			// console.log(`cliente.serverUDP got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 		});
@@ -144,7 +173,7 @@ const server = {
 		if (callback) callback(cliente);
 	},
 	brodcastUPD(clients, message, rinfo, cliente) {
-		var _buffer = new Buffer(cliente.name + " ==> " + message);
+		var _buffer = new Buffer("==> " + message);
 		clients.forEach(function (current) {
 			if (current.port != rinfo.port) {
 				cliente.serverUDP.send(_buffer, 0, _buffer.length, current.port, current.address);

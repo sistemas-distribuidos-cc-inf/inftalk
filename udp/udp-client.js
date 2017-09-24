@@ -5,6 +5,7 @@
 let
   net = require('net'),
   readline = require('readline'),
+  constant = require('./constant.js'),
   host = 'localhost',
   port = 5050,
   client = null,
@@ -20,8 +21,6 @@ Abre conexão com servidor via tcp
 */
 client = net.connect({ port: port, host: host });
 
-
-
 let udp = {
   dgram: require('dgram'),
   connection: null,
@@ -33,7 +32,8 @@ let udp = {
   send(port, message) {
     const buffer = Buffer.from(message);
     udp.connection.send(buffer, port, (err) => {
-      //client2.close();
+      if (err)
+        console.log(err)
     });
   },
   close() {
@@ -49,15 +49,26 @@ Função on()
 Exibe dados ecoados do servidor
 */
 client.on('data', function (data) {
-  data = data.toString();
-  if (data.indexOf('@@') > 1) {
-    console.log("*****************************************************")
-    var split = data.split("@@");
-    console.log(split)
-    portConnection = split[0];
-    udp.send(portConnection, 'connection udp aberta');
+  data = JSON.parse(data.toString());
+  if (data[constant.CONNECTION]) {
+    portConnection = data[constant.CONNECTION].port;
+    udp.send(portConnection, 'You\'re welcome!')
   }
-  console.log(data);
+  if (data[constant.QUIT]) {
+    console.log('Closed chat');
+    portConnection = null;
+    udp.close();
+  }
+  if (data[constant.BUSY]) {
+    console.log(data[constant.BUSY].message);
+  }
+  if (data[constant.ESTABLISHED]) {
+    console.log(data[constant.ESTABLISHED].message);
+  }
+  if (data[constant.SELECT_USER]) {
+    console.log(data[constant.SELECT_USER].message);
+    console.log(data[constant.SELECT_USER].list);
+  }
 });
 /**
 Função on()
@@ -106,14 +117,36 @@ readline.createInterface({
     }
   } else {
     if (!conectado) {
-      client.write(myNick + '**' + portCliente);
+      const obj = {
+        [constant.CREATE_USER]: {
+          nickname: myNick,
+          port: portCliente
+        }
+      };
+      client.write(JSON.stringify(obj));
       conectado = true;
     }
     if (portConnection) {
-      // console.log(line);
-      udp.send(portConnection, line);
+      if (line.indexOf('QUIT') >= 0) {
+        conectado = false;
+        const obj = {
+          [constant.QUIT]: {
+            quit: true
+          }
+        }
+        client.write(JSON.stringify(obj));
+      } else if (line.length) {
+        udp.send(portConnection, line);
+      }
     }
-    else client.write(line);
+    if (line.indexOf('#') >= 0 && line.length) {
+      const obj = {
+        [constant.SELECT_USER]: {
+          user: line.split('#')[1]
+        }
+      }
+      client.write(JSON.stringify(obj));
+    }
   }
 });
 
