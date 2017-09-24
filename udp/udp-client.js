@@ -1,25 +1,15 @@
 'use strict';
-/*
- Declaração de variáveis
-*/
 let
   net = require('net'),
   readline = require('readline'),
   constant = require('./constant.js'),
   host = 'localhost',
   port = 5050,
-  client = null,
+  client = net.connect({ port: port, host: host }),
   myNick = null,
   portCliente = null,
   conectado = null,
   portConnection = null;
-/**
-Função connect()
-Abre conexão com servidor via tcp
-@port porta do servidor
-@host ip do servidor
-*/
-client = net.connect({ port: port, host: host });
 
 let udp = {
   dgram: require('dgram'),
@@ -40,14 +30,9 @@ let udp = {
     udp.connection.close();
   }
 }
-
 udp.create();
 udp.connection.bind();
 
-/**
-Função on()
-Exibe dados ecoados do servidor
-*/
 client.on('data', function (data) {
   data = JSON.parse(data.toString());
   if (data[constant.CONNECTION]) {
@@ -70,35 +55,17 @@ client.on('data', function (data) {
     console.log(data[constant.SELECT_USER].list);
   }
 });
-/**
-Função on()
-Exibe que a conexão foi fechada
-*/
 client.on('end', function () {
   console.log('Server has disconnected.');
   process.exit();
 });
 
-
-/**
-Função getNick()
-@return o nickname
-*/
-function getNick() {
-  console.log("What's your name?");
-}
-/**
-Função getPort()
-@return a porta
-*/
-function getPort() {
-  console.log("What's your port?");
+function getData() {
+  if (!myNick)
+    console.log("What's your name?");
+  else console.log("What's your port?");
 }
 
-/**
-Função createInterface()
-recebe dados digitados no console
-*/
 readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -106,9 +73,8 @@ readline.createInterface({
   if (!myNick || !portCliente) {
     line = line.trim();
     if (line.length < 1) {
-      if (!myNick)
-        getNick();
-      else getPort();
+      if (!myNick || !portCliente)
+        getData();
     } else {
       if (!myNick)
         myNick = line;
@@ -150,4 +116,4 @@ readline.createInterface({
   }
 });
 
-getNick();
+getData();

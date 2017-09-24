@@ -9,7 +9,6 @@ const server = {
 		server.connection = server.net.createServer((client) => {
 			client.on('data', function (data) {
 				data = JSON.parse(data.toString());
-				console.log(data);
 				if (data[constant.CREATE_USER]) {
 					var split = data[constant.CREATE_USER];
 					client.name = data[constant.CREATE_USER].nickname;
@@ -150,7 +149,6 @@ const server = {
 		cliente.serverUDP.on('message', (msg, rinfo) => {
 			if (cliente.clientConnection.every((cn) => cn.port != rinfo.port))
 				cliente.clientConnection.push(rinfo);
-			console.log(cliente.clientConnection)
 			server.brodcastUPD(cliente.clientConnection, msg, rinfo, cliente);
 			// console.log(`cliente.serverUDP got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 		});
