@@ -33,7 +33,7 @@ let udp = {
 udp.create();
 udp.connection.bind();
 
-client.on('data', function (data) {
+client.on('data', (data) => {
   data = JSON.parse(data.toString());
   if (data[constant.CONNECTION]) {
     portConnection = data[constant.CONNECTION].port;
@@ -55,7 +55,7 @@ client.on('data', function (data) {
     console.log(data[constant.SELECT_USER].list);
   }
 });
-client.on('end', function () {
+client.on('end', () => {
   console.log('Server has disconnected.');
   process.exit();
 });

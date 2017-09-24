@@ -170,6 +170,8 @@ const server = {
 		});
 	}
 };
+server.create();
+server.listen();
 
 function clone(obj) {
 	var copy;
@@ -204,6 +206,3 @@ function clone(obj) {
 
 	throw new Error("Unable to copy obj! Its type isn't supported.");
 }
-
-server.create();
-server.listen();
