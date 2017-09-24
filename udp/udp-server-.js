@@ -127,24 +127,15 @@ const server = {
 					return [index, '-', c.name].join(' ')
 			});
 			if (!_c.chat.connection) {
-				if (list.length && list[0]) {
-					const obj1 = {
-						[constant.SELECT_USER]: {
-							message: 'Select a person to start talk by starting with #ID (example: #0)\n',
-							list: list.join('\n')
-						}
-					};
-					_c.write(JSON.stringify(obj1));
-				}
-				else {
-					const obj2 = {
-						[constant.SELECT_USER]: {
-							message: 'Nobody users',
-							list: ''
-						}
-					};
-					_c.write(JSON.stringify(obj2));
-				}
+				if (list.every((l) => !l))
+					list = ['Nobody users'];
+				const obj1 = {
+					[constant.SELECT_USER]: {
+						message: 'Select a person to start talk by starting with #ID (example: #0)\n',
+						list: list.join('\n')
+					}
+				};
+				_c.write(JSON.stringify(obj1));
 			}
 		})
 
